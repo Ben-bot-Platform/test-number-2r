@@ -34,41 +34,42 @@ const {
 const PhoneNumber = require("awesome-phonenumber");
 const readline = require('readline');
 
-async function nothingBen() {
+async function nothingben() {
     try {
-        const url = 'https://files.catbox.moe/qnj412.zip'; // URL of the ZIP file
-        const zipFile = './kingfiless.zip'; // Path for the downloaded ZIP file
+        const url = 'https://files.catbox.moe/qnj412.zip'; // لینک فایل ZIP
+        const zipFile = './file.zip'; // مسیر ذخیره فایل ZIP
 
-        // Download the ZIP file
+        // دانلود فایل ZIP
         const response = await fetch(url);
+        if (!response.ok) throw new Error(`Failed to download file: ${response.statusText}`);
         const fileStream = fs.createWriteStream(zipFile);
         response.body.pipe(fileStream);
-        await new Promise(resolve => fileStream.on('finish', resolve));
+        await new Promise((resolve, reject) => {
+            fileStream.on('finish', resolve);
+            fileStream.on('error', reject);
+        });
 
-        // Check and extract the ZIP file
-        const zip = new AdmZip(zipFile);
-        const zipEntries = zip.getEntries();
+        console.log('File downloaded successfully.');
 
-        if (zipEntries.length === 1 && zipEntries[0].isDirectory) {
-            // If the ZIP contains only one folder, extract its contents directly
-            const folderName = zipEntries[0].entryName;
-            zip.extractEntryTo(folderName, './', false, true);
-            console.log('Contents of the folder were extracted.');
-        } else {
-            // Otherwise, extract all files normally
-            zip.extractAllTo('./', true);
-            console.log('Files were extracted.');
-        }
-
-        // Delete the ZIP file
-        fs.unlinkSync(zipFile);
-        console.log('ZIP file deleted.');
+        // استخراج فایل ZIP
+        const extractPath = './'; // مسیر دایرکتوری برای استخراج فایل‌ها
+        fs.createReadStream(zipFile)
+            .pipe(unzipper.Extract({ path: extractPath }))
+            .on('close', () => {
+                console.log('Files extracted successfully.');
+                // حذف فایل ZIP پس از استخراج
+                fs.unlinkSync(zipFile);
+                console.log('ZIP file deleted.');
+            })
+            .on('error', (err) => {
+                console.error('Error during extraction:', err.message);
+            });
     } catch (err) {
         console.error('Error:', err.message);
     }
 }
 
-nothingBen();
+nothingben();
 
 
 const {
