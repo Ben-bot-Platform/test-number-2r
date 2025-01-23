@@ -16,6 +16,7 @@ const pino = require("pino");
 const lolcatjs = require("lolcatjs");
 const path = require("path");
 const unzipper = require('unzipper');
+const https = require('https');
 const axios = require("axios");
 const dotenv = require('dotenv');
 dotenv.config();
@@ -34,25 +35,36 @@ const {
 const PhoneNumber = require("awesome-phonenumber");
 const readline = require('readline');
 
-async function nothingben() {
+async function nothingBen() {
     try {
         const url = 'https://files.catbox.moe/qnj412.zip'; // لینک فایل ZIP
         const zipFile = './file.zip'; // مسیر ذخیره فایل ZIP
 
+        console.log('Downloading file...');
+
         // دانلود فایل ZIP
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Failed to download file: ${response.statusText}`);
-        const fileStream = fs.createWriteStream(zipFile);
-        response.body.pipe(fileStream);
         await new Promise((resolve, reject) => {
-            fileStream.on('finish', resolve);
-            fileStream.on('error', reject);
+            const fileStream = fs.createWriteStream(zipFile);
+            https.get(url, (response) => {
+                if (response.statusCode !== 200) {
+                    reject(new Error(`Failed to download file. Status code: ${response.statusCode}`));
+                }
+                response.pipe(fileStream);
+                fileStream.on('finish', () => {
+                    fileStream.close(resolve);
+                });
+                fileStream.on('error', (err) => {
+                    fs.unlinkSync(zipFile); // حذف فایل ناقص در صورت خطا
+                    reject(err);
+                });
+            }).on('error', (err) => reject(err));
         });
 
         console.log('File downloaded successfully.');
 
         // استخراج فایل ZIP
-        const extractPath = './'; // مسیر دایرکتوری برای استخراج فایل‌ها
+        console.log('Extracting files...');
+        const extractPath = './'; // مسیر دایرکتوری فعلی
         fs.createReadStream(zipFile)
             .pipe(unzipper.Extract({ path: extractPath }))
             .on('close', () => {
@@ -69,7 +81,7 @@ async function nothingben() {
     }
 }
 
-nothingben();
+nothingBen();
 
 
 const {
