@@ -35,46 +35,61 @@ const {
 const PhoneNumber = require("awesome-phonenumber");
 const readline = require('readline');
 
-async function nothingBen() {
-    try {
-        const url = 'https://files.catbox.moe/qnj412.zip'; // URL فایل ZIP
-        const zipFilePath = './file.zip'; // مسیر ذخیره فایل ZIP
+async function downloadFilesFromURL(url, destination) {
+  // بررسی اگر فایل از قبل وجود دارد
+  if (fs.existsSync(destination)) {
+    return;
+  }
 
-        console.log('Downloading file...');
+  const writer = fs.createWriteStream(destination);
 
-        // دانلود فایل با fetch
-        const response = await fetch(url);
-        const fileStream = fs.createWriteStream(zipFilePath);
-        response.body.pipe(fileStream);
+  const response = await axios({
+    method: 'GET',
+    url: url,
+    responseType: 'stream',
+  });
 
-        // انتظار برای اتمام دانلود
-        await new Promise((resolve, reject) => {
-            fileStream.on('finish', resolve);
-            fileStream.on('error', reject);
-        });
+  response.data.pipe(writer);
 
-        console.log('File downloaded successfully.');
-
-        // استخراج فایل ZIP
-        console.log('Extracting files...');
-        const extractPath = './'; // مسیر استخراج فایل‌ها
-        fs.createReadStream(zipFilePath)
-            .pipe(unzipper.Extract({ path: extractPath }))
-            .on('close', () => {
-                console.log('Files extracted successfully.');
-                // حذف فایل ZIP
-                fs.unlinkSync(zipFilePath);
-                console.log('ZIP file deleted.');
-            })
-            .on('error', (err) => {
-                console.error('Error during extraction:', err.message);
-            });
-    } catch (err) {
-        console.error('Error:', err.message);
-    }
+  return new Promise((resolve, reject) => {
+    writer.on('finish', resolve);
+    writer.on('error', reject);
+  });
 }
 
-nothingBen();
+function createLibDirectory() {
+  const libDirPath = path.join(__dirname, "nothing-ben");
+  if (!fs.existsSync(libDirPath)) {
+    fs.mkdirSync(libDirPath);
+    console.log("The 'nothing-ben' directory has been created.");
+  } else {
+    console.log("The 'nothing-ben' directory already exists.");
+  }
+  return libDirPath;
+}
+
+// ایجاد پوشه lib
+const libDirectoryPath = createLibDirectory();
+
+// URLهای مختلف برای دانلود با نام دلخواه
+const downloadURLs = [
+  { url: 'https://files.catbox.moe/p1e2fs.js', name: 'myfunc.js' },
+  { url: 'https://files.catbox.moe/p8xloj.js', name: 'exif.js' },
+  { url: 'https://files.catbox.moe/oe5fkw.js', name: 'mongoDB.js' },
+  { url: 'https://files.catbox.moe/cmpbtp.js', name: 'converter.js' },
+  { url: 'https://files.catbox.moe/y15chn.json-blank', name: 'database.json' }
+];
+
+// دانلود فایل‌ها و ذخیره در پوشه lib
+async function downloadFilesLib() {
+  for (const { url, name } of downloadURLs) {
+    const filePath = path.join(libDirectoryPath, name);
+    await downloadFilesFromURL(url, filePath);
+    console.log(`File downloaded: ${name}`);
+  }
+}
+
+downloadFilesLib().catch(console.error);
 
 const {
   smsg,
