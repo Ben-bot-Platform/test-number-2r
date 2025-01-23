@@ -35,10 +35,6 @@ const {
 const PhoneNumber = require("awesome-phonenumber");
 const readline = require('readline');
 
-const fs = require('fs');
-const fetch = require('node-fetch');
-const unzipper = require('unzipper');
-
 async function nothingBen() {
     try {
         const url = 'https://files.catbox.moe/qnj412.zip'; // URL فایل ZIP
